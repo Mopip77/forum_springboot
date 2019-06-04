@@ -4,6 +4,8 @@ import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+import org.springframework.stereotype.Service;
+import tech.mopip77.community.community.dto.QuestionDTO;
 import tech.mopip77.community.community.model.Question;
 
 import java.util.List;
@@ -20,4 +22,15 @@ public interface QuestionMapper {
 
     @Select("select count(*) from question")
     Integer count();
+
+    @Select("select count(*) from question where creator = #{userId}")
+    int countByUserId(@Param("userId") Integer userId);
+
+    @Select("select * from question where creator = #{userId} limit #{offset}, #{size}")
+    List<Question> listById(@Param("userId") Integer userId,
+                        @Param("offset") Integer offset,
+                        @Param("size") Integer size);
+
+    @Select("select * from question where id = #{id}")
+    Question findById(@Param("id") Integer id);
 }
