@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import tech.mopip77.community.community.dto.AccessTokenDTO;
 import tech.mopip77.community.community.dto.GithubUser;
-import tech.mopip77.community.community.mapper.User2Mapper;
 import tech.mopip77.community.community.model.User;
 import tech.mopip77.community.community.provider.GithubProvider;
 import tech.mopip77.community.community.service.UserService;

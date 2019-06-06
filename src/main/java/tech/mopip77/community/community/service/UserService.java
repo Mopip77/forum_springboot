@@ -1,34 +1,39 @@
 package tech.mopip77.community.community.service;
 
-import org.apache.catalina.mbeans.UserMBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import tech.mopip77.community.community.mapper.User2Mapper;
+import tech.mopip77.community.community.mapper.UserMapper;
 import tech.mopip77.community.community.model.User;
+import tech.mopip77.community.community.model.UserExample;
 
-import java.util.UUID;
+import java.util.List;
 
 @Service
 public class UserService {
 
     @Autowired
-    private User2Mapper user2Mapper;
+    private UserMapper userMapper;
 
 
     public void createOrUpdate(User user) {
-        User dbUser = user2Mapper.findByAccountId(user.getAccountId());
-        if (dbUser == null) {
+        UserExample example = new UserExample();
+        example.createCriteria().andAccountIdEqualTo(user.getAccountId());
+        List<User> dbUsers = userMapper.selectByExample(example);
+
+        if (dbUsers.size() == 0) {
             // create
             user.setGmtCreate(System.currentTimeMillis());
             user.setGmtModified(user.getGmtCreate());
-            user2Mapper.insert(user);
+            userMapper.insert(user);
         } else {
             // update
-            dbUser.setGmtModified(System.currentTimeMillis());
-            dbUser.setAvatarUrl(user.getAvatarUrl());
-            dbUser.setName(user.getName());
-            dbUser.setToken(user.getToken());
-            user2Mapper.update(dbUser);
+            User updateUser = new User();
+            updateUser.setGmtModified(System.currentTimeMillis());
+            updateUser.setAvatarUrl(user.getAvatarUrl());
+            updateUser.setName(user.getName());
+            updateUser.setToken(user.getToken());
+            updateUser.setId(dbUsers.get(0).getId());
+            userMapper.updateByPrimaryKeySelective(updateUser);
         }
 
     }

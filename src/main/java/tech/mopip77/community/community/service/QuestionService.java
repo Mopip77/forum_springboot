@@ -1,13 +1,17 @@
 package tech.mopip77.community.community.service;
 
+import org.apache.ibatis.session.RowBounds;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import tech.mopip77.community.community.dto.PaginationDTO;
 import tech.mopip77.community.community.dto.QuestionDTO;
+import tech.mopip77.community.community.exception.CustomizeErrorCode;
+import tech.mopip77.community.community.exception.CustomizeException;
 import tech.mopip77.community.community.mapper.QuestionMapper;
-import tech.mopip77.community.community.mapper.User2Mapper;
+import tech.mopip77.community.community.mapper.UserMapper;
 import tech.mopip77.community.community.model.Question;
+import tech.mopip77.community.community.model.QuestionExample;
 import tech.mopip77.community.community.model.User;
 
 import java.util.ArrayList;
@@ -17,24 +21,26 @@ import java.util.List;
 public class QuestionService {
 
     @Autowired
-    private User2Mapper user2Mapper;
+    private UserMapper userMapper;
 
     @Autowired
     private QuestionMapper questionMapper;
 
 
     public PaginationDTO list(Integer page, Integer size) {
-        int totalCount = questionMapper.count();
+        int totalCount = (int) questionMapper.countByExample(new QuestionExample());
         PaginationDTO paginationDTO = new PaginationDTO();
         paginationDTO.setPagination(totalCount, page, size);
 
         List<QuestionDTO> results = new ArrayList<>();
         // 用paginationDTO中的page, 防止传入的page越界
         Integer offset = size * (paginationDTO.getPage() - 1);
-        List<Question> questions = questionMapper.list(offset, size);
+        QuestionExample example = new QuestionExample();
+        List<Question> questions = questionMapper.selectByExampleWithRowbounds(new QuestionExample(), new RowBounds(offset, size));
 
         for (Question question : questions) {
-            User user = user2Mapper.findById(question.getCreator());
+
+            User user = userMapper.selectByPrimaryKey(question.getCreator());
             QuestionDTO questionDTO = new QuestionDTO();
             BeanUtils.copyProperties(question, questionDTO);
             questionDTO.setUser(user);
@@ -47,17 +53,20 @@ public class QuestionService {
 
 
     public PaginationDTO list(Integer userId, Integer page, Integer size) {
-        int totalCount = questionMapper.countByUserId(userId);
+        QuestionExample example = new QuestionExample();
+        example.createCriteria()
+                .andCreatorEqualTo(userId);
+        int totalCount = (int) questionMapper.countByExample(example);
         PaginationDTO paginationDTO = new PaginationDTO();
         paginationDTO.setPagination(totalCount, page, size);
 
         List<QuestionDTO> results = new ArrayList<>();
         // 用paginationDTO中的page, 防止传入的page越界
         Integer offset = size * (paginationDTO.getPage() - 1);
-        List<Question> questions = questionMapper.listById(userId, offset, size);
+        List<Question> questions = questionMapper.selectByExampleWithRowbounds(example, new RowBounds(offset, size));
 
         for (Question question : questions) {
-            User user = user2Mapper.findById(question.getCreator());
+            User user = userMapper.selectByPrimaryKey(question.getCreator());
             QuestionDTO questionDTO = new QuestionDTO();
             BeanUtils.copyProperties(question, questionDTO);
             questionDTO.setUser(user);
@@ -69,10 +78,13 @@ public class QuestionService {
     }
 
     public QuestionDTO getById(Integer id) {
-        Question question = questionMapper.findById(id);
+        Question question = questionMapper.selectByPrimaryKey(id);
+        if (question == null) {
+            throw new CustomizeException(CustomizeErrorCode.QUESTION_NOT_FOUND);
+        }
         QuestionDTO questionDTO = new QuestionDTO();
         BeanUtils.copyProperties(question, questionDTO);
-        questionDTO.setUser(user2Mapper.findById(question.getCreator()));
+        questionDTO.setUser(userMapper.selectByPrimaryKey(question.getCreator()));
         return questionDTO;
     }
 
@@ -81,10 +93,20 @@ public class QuestionService {
             // create
             question.setGmtCreate(System.currentTimeMillis());
             question.setGmtModified(question.getGmtCreate());
-            questionMapper.create(question);
+            questionMapper.insert(question);
         } else {
-            question.setGmtModified(System.currentTimeMillis());
-            questionMapper.update(question);
+            Question updateQuestion = new Question();
+            updateQuestion.setGmtModified(System.currentTimeMillis());
+            updateQuestion.setDescription(question.getDescription());
+            updateQuestion.setTag(question.getTag());
+            updateQuestion.setTitle(question.getTitle());
+            QuestionExample example = new QuestionExample();
+            example.createCriteria()
+                    .andIdEqualTo(question.getId());
+            int updated = questionMapper.updateByExampleSelective(updateQuestion, example);
+            if (updated != 1) {
+                throw new CustomizeException(CustomizeErrorCode.QUESTION_NOT_FOUND);
+            }
         }
     }
 }
