@@ -1,9 +1,6 @@
 package tech.mopip77.community.community.mapper;
 
-import org.apache.ibatis.annotations.Insert;
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.*;
 import org.springframework.stereotype.Service;
 import tech.mopip77.community.community.dto.QuestionDTO;
 import tech.mopip77.community.community.model.Question;
@@ -33,4 +30,7 @@ public interface QuestionMapper {
 
     @Select("select * from question where id = #{id}")
     Question findById(@Param("id") Integer id);
+
+    @Update("update question set title = #{title}, tag = #{tag}, description = #{description}, gmt_modified = #{gmtModified} where id = #{id}")
+    void update(Question question);
 }

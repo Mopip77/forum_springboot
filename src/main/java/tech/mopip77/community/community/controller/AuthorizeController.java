@@ -10,6 +10,7 @@ import tech.mopip77.community.community.dto.GithubUser;
 import tech.mopip77.community.community.mapper.User2Mapper;
 import tech.mopip77.community.community.model.User;
 import tech.mopip77.community.community.provider.GithubProvider;
+import tech.mopip77.community.community.service.UserService;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
@@ -29,9 +30,8 @@ public class AuthorizeController {
     @Value("${github.redirect_uri}")
     private String github_redirect_uri;
 
-//    @Resource(type = User2Mapper.class)
     @Autowired
-    private User2Mapper user2Mapper;
+    private UserService userService;
 
 
     @GetMapping("/callback")
@@ -55,16 +55,23 @@ public class AuthorizeController {
             user.setToken(token);
             user.setName(githubUser.getName());
             user.setAccountId(String.valueOf(githubUser.getId()));
-            user.setGmtCreate(System.currentTimeMillis());
-            user.setGmtModified(user.getGmtCreate());
             user.setAvatarUrl(githubUser.getAvatarUrl());
-
+            userService.createOrUpdate(user);
             response.addCookie(new Cookie("token", token));
-            user2Mapper.insert(user);
             return "redirect:/";
         } else {
             // fail relogin
             return "redirect:/";
         }
+    }
+
+    @GetMapping("/logout")
+    public String logout(HttpServletRequest request,
+                         HttpServletResponse response) {
+        request.getSession().removeAttribute("user");
+        Cookie delLoginCookie = new Cookie("token", null);
+        delLoginCookie.setMaxAge(0);
+        response.addCookie(delLoginCookie);
+        return "redirect:/";
     }
 }
