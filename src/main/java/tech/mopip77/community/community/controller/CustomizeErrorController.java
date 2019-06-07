@@ -1,6 +1,7 @@
 package tech.mopip77.community.community.controller;
 
-import org.springframework.boot.web.servlet.error.ErrorController;
+import org.springframework.boot.autoconfigure.web.servlet.error.AbstractErrorController;
+import org.springframework.boot.web.servlet.error.ErrorAttributes;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
@@ -12,7 +13,12 @@ import javax.servlet.http.HttpServletRequest;
 
 @Controller
 @RequestMapping("${server.error.path:${error.path:/error}}")
-public class CustomizeErrorController implements ErrorController {
+public class CustomizeErrorController extends AbstractErrorController {
+
+
+    public CustomizeErrorController(ErrorAttributes errorAttributes) {
+        super(errorAttributes);
+    }
 
     @Override
     public String getErrorPath() {
@@ -23,27 +29,13 @@ public class CustomizeErrorController implements ErrorController {
     public ModelAndView errorHtml(HttpServletRequest request,
                                   Model model) {
         HttpStatus status = getStatus(request);
-
         if (status.is4xxClientError()) {
-            model.addAttribute("message", "4xx~~~你的问题");
+            model.addAttribute("message", "4xx你有点问题");
         } else {
-            model.addAttribute("message", "服务器的问题");
-        }
+            model.addAttribute("message", "5xx服务器炸了");
 
+        }
         return new ModelAndView("error");
     }
 
-    public HttpStatus getStatus(HttpServletRequest request) {
-        Integer statusCode = (Integer) request
-                .getAttribute("javax.servlet.error.status_code");
-        if (statusCode == null) {
-            return HttpStatus.INTERNAL_SERVER_ERROR;
-        }
-        try {
-            return HttpStatus.valueOf(statusCode);
-        }
-        catch (Exception ex) {
-            return HttpStatus.INTERNAL_SERVER_ERROR;
-        }
-    }
 }
