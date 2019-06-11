@@ -1,9 +1,10 @@
 package tech.mopip77.community.community.controller;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
-import tech.mopip77.community.community.dto.CommentDTO;
+import tech.mopip77.community.community.dto.CommentCreateDTO;
 import tech.mopip77.community.community.dto.ResultDTO;
 import tech.mopip77.community.community.exception.CustomizeErrorCode;
 import tech.mopip77.community.community.model.Comment;
@@ -20,7 +21,7 @@ public class CommentController {
 
     @ResponseBody
     @PostMapping("/comment")
-    public Object post(@RequestBody CommentDTO commentDTO,
+    public Object post(@RequestBody CommentCreateDTO commentCreateDTO,
                        HttpServletRequest request) {
 
         User commentUser = (User) request.getSession().getAttribute("user");
@@ -28,12 +29,16 @@ public class CommentController {
             return ResultDTO.errorOf(CustomizeErrorCode.NOT_LOGIN_IN);
         }
 
+        if (commentCreateDTO == null || StringUtils.isBlank(commentCreateDTO.getContent())) {
+            return ResultDTO.errorOf(CustomizeErrorCode.COMMENT_IS_EMPTY);
+        }
+
         Comment comment = new Comment();
-        comment.setParentId(commentDTO.getParentId());
-        comment.setContent(commentDTO.getContent());
+        comment.setParentId(commentCreateDTO.getParentId());
+        comment.setContent(commentCreateDTO.getContent());
         comment.setGmtCreate(System.currentTimeMillis());
         comment.setGmtModified(comment.getGmtCreate());
-        comment.setType(commentDTO.getType());
+        comment.setType(commentCreateDTO.getType());
         comment.setCommentator(commentUser.getId());
         commentService.insertSelective(comment);
         return ResultDTO.okOf();
