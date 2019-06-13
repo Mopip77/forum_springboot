@@ -5,13 +5,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import tech.mopip77.community.community.dto.CommentCreateDTO;
+import tech.mopip77.community.community.dto.CommentDTO;
 import tech.mopip77.community.community.dto.ResultDTO;
+import tech.mopip77.community.community.enums.CommentTypeEnum;
 import tech.mopip77.community.community.exception.CustomizeErrorCode;
 import tech.mopip77.community.community.model.Comment;
 import tech.mopip77.community.community.model.User;
 import tech.mopip77.community.community.service.CommentService;
 
 import javax.servlet.http.HttpServletRequest;
+import java.util.List;
 
 @Controller
 public class CommentController {
@@ -42,5 +45,12 @@ public class CommentController {
         comment.setCommentator(commentUser.getId());
         commentService.insertSelective(comment);
         return ResultDTO.okOf();
+    }
+
+    @ResponseBody
+    @GetMapping("/comment/{id}")
+    public ResultDTO comments(@PathVariable(name = "id") Long id) {
+        List<CommentDTO> commentDTOS = commentService.listByQuestionId(id, CommentTypeEnum.COMMENT);
+        return ResultDTO.okOf(commentDTOS);
     }
 }

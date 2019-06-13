@@ -5,9 +5,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import tech.mopip77.community.community.dto.CommentCreateDTO;
 import tech.mopip77.community.community.dto.CommentDTO;
 import tech.mopip77.community.community.dto.QuestionDTO;
+import tech.mopip77.community.community.enums.CommentTypeEnum;
 import tech.mopip77.community.community.service.CommentService;
 import tech.mopip77.community.community.service.QuestionService;
 
@@ -25,7 +25,7 @@ public class QuestionController {
     @GetMapping("/question/{id}")
     public String question(@PathVariable(name = "id") Long id, Model model) {
         QuestionDTO questionDTO = questionService.getById(id);
-        List<CommentDTO> commentDTOS = commentService.listByQuestionId(id);
+        List<CommentDTO> commentDTOS = commentService.listByQuestionId(id, CommentTypeEnum.QUESTION);
         questionService.incView(id);
         model.addAttribute("question", questionDTO);
         model.addAttribute("comments", commentDTOS);
